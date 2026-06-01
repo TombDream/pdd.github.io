@@ -20,7 +20,7 @@
     --purple: #7c3aed;
     --radius: 7px;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin:0; padding:0; }
   body {
     font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
     background: var(--bg);
@@ -39,7 +39,7 @@
     margin-bottom: 10px;
     letter-spacing: 0.5px;
   }
-  .main { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 960px; margin: 0 auto; }
+  .main { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 960px; margin:0 auto; }
   @media (max-width: 640px) { .main { grid-template-columns: 1fr; } }
   .card {
     background: var(--card);
@@ -219,20 +219,26 @@
           <input type="text" id="p_ref_price" readonly>
           <span class="hint">低于此价标红</span>
         </div>
-        <div class="field">
-          <label>目标利润(元/件)</label>
-          <input type="number" id="p_target_profit" value="0" step="0.01">
-        </div>
-      </div>
-      <div class="input-row">
-        <div class="field">
-          <label>建议拼单价</label>
-          <input type="text" id="p_suggest_price" readonly>
-        </div>
+
         <div class="field">
           <label>优惠券(元)</label>
           <input type="number" id="p_coupon" value="0" step="1">
           <span class="hint">实际参与计算 · 超1/2标红</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:8px">
+      <div class="card-title">利润目标</div>
+      <div class="input-row">
+        <div class="field">
+          <label>目标利润(元/件)</label>
+          <input type="number" id="p_target_profit" value="0" step="0.01">
+        </div>
+        <div class="field">
+          <label>建议拼单价</label>
+          <input type="text" id="p_suggest_price" readonly>
+          <span class="hint">按目标利润算出</span>
         </div>
       </div>
     </div>
@@ -264,17 +270,16 @@
       <summary>展开公式说明</summary>
       <div class="formula-box">
         <p><b>总成本</b> = 产品单价 × 数量</p>
-        <p><b>参考拼单价(保本)</b> = (总成本 + 邮费) ÷ (1 − 类目扣点 − 技术服务费 − 退货率)</p>
+        <p><b>参考拼单价(保本)</b> = (总成本 + 邮费) ÷ (1 − 类目扣点 − 技术服务费 − 退货率) + 优惠券，折扣率<100时 ÷ (折扣率÷100)</p>
         <p><b>建议拼单价</b> = (总成本 + 邮费 + 目标利润 × 数量) ÷ (1 − 类目扣点 − 技术服务费 − 退货率)</p>
-        <p><b>参考优惠券</b> = CEIL(拼单价 × 2 ÷ 5) &nbsp;（仅供参考，不参与计算）</p>
+        <p><b>参考优惠券</b> = CEIL(拼单价 × 2 ÷ 5) （仅供参考，不参与计算）</p>
         <p><b>最终售价</b> = 拼单价 − 优惠券</p>
         <p><b>平台扣费</b> = 最终售价 × (类目扣点 + 技术服务费 + 退货率)</p>
         <p><b>总成本(含运费)</b> = 平台扣费 + 邮费 + 总成本</p>
         <p><b>利润</b> = 最终售价 − 总成本(含运费)</p>
         <p><b>利润率</b> = 利润 ÷ 最终售价</p>
-        <p><b>投产比(ROAS)</b> = 最终售价 ÷ 利润 &nbsp;（亏损/保本时为 —）</p>
+        <p><b>投产比(ROAS)</b> = 最终售价 ÷ 利润 （亏损/保本时为 —）</p>
         <p><b>保本投产比</b> = 投产比 + 1</p>
-        <p><b>折扣后保本拼单价</b> = 参考拼单价(保本) ÷ (折扣率 ÷ 100)</p>
       </div>
     </details>
   </div>
@@ -284,7 +289,7 @@
     <div class="results">
       <div class="res-box" id="r_coupon_ref">
         <div class="lbl">参考优惠券(元)</div>
-        <div class="val" id="v_coupon_ref" style="color:var(--purple)">—</div>
+        <div class="val" id="v_coupon_ref">—</div>
         <div class="sub">CEIL(拼单价 × 2 ÷ 5)，仅供参考</div>
       </div>
       <div class="res-box" id="r_price">
@@ -317,11 +322,6 @@
         <div class="val" id="v_break">—</div>
         <div class="sub">投产比 + 1</div>
       </div>
-      <div class="res-box" id="r_disc_ref">
-        <div class="lbl">折扣后保本拼单价</div>
-        <div class="val" id="v_disc_ref" style="color:var(--purple)">—</div>
-        <div class="sub" id="t_disc">输入折扣率后显示</div>
-      </div>
     </div>
   </div>
 </div>
@@ -335,6 +335,7 @@ let couponManuallyEdited = false;
 
 // 拼单价变动时，自动刷新参考优惠券 = 向上取整(拼单价 × 2/5)
 function autoRefCoupon() {
+  if (couponManuallyEdited) return;
   const price = parseFloat($("p_price").value) || 0;
   if (price > 0) {
     $("v_coupon_ref").textContent = Math.ceil(price * 2 / 5);
@@ -343,7 +344,7 @@ function autoRefCoupon() {
   }
 }
 
-// 成本(单价/数量/邮费/费率)变动 → 拼单价始终自动刷新为参考价
+// 成本(单价/数量/邮费/费率/折扣率)变动 → 拼单价始终自动刷新为参考价
 function onCostChange() {
   recalc();
   const unit    = parseFloat($("p_unit").value)     || 0;
@@ -354,9 +355,13 @@ function onCostChange() {
   const tech    = parseFloat($("g_tech").value)        || 0;
   const ret     = parseFloat($("g_ret").value)         || 0;
   const denom   = 1 - cat - tech - ret;
-  const refPrice = (denom > 0) ? ((cost + freight) / denom) : 0;
-  if (refPrice > 0) {
-    $("p_price").value = refPrice.toFixed(2);
+  const refPriceRaw = (denom > 0) ? ((cost + freight) / denom) : 0;
+  const discRate = parseFloat($("p_discount").value) || 100;
+  const refPriceShow = (refPriceRaw > 0 && discRate < 100)
+    ? refPriceRaw / (discRate / 100)
+    : refPriceRaw;
+  if (refPriceShow > 0) {
+    $("p_price").value = refPriceShow.toFixed(2);
     autoRefCoupon();
     recalc();
   }
@@ -387,10 +392,15 @@ function recalc() {
     couponInput.title = "";
   }
 
-  // 参考价(保本价)
+  // 参考价(保本价)，随折扣率变化，含优惠券
   const denom = 1 - cat - tech - ret;
-  const refPrice = (denom > 0) ? ((cost + freight) / denom) : 0;
-  $("p_ref_price").value = refPrice > 0 ? "¥" + fmt(refPrice) : "—";
+  const couponForRef = parseFloat($("p_coupon").value) || 0;
+  const refPriceRaw = (denom > 0) ? ((cost + freight) / denom + couponForRef) : 0;
+  const discRate = parseFloat($("p_discount").value) || 100;
+  const refPriceShow = (refPriceRaw > 0 && discRate < 100)
+    ? refPriceRaw / (discRate / 100)
+    : refPriceRaw;
+  $("p_ref_price").value = refPriceShow > 0 ? "¥" + fmt(refPriceShow) : "—";
 
   // 建议拼单价
   const targetProfit = parseFloat($("p_target_profit").value) || 0;
@@ -399,27 +409,14 @@ function recalc() {
 
   // 拼单价低于参考价警告
   const priceInput = $("p_price");
-  if (refPrice > 0 && price > 0 && price < refPrice) {
+  if (refPriceShow > 0 && price > 0 && price < refPriceShow) {
     priceInput.style.borderColor = "var(--red)";
     priceInput.style.background = "#fef2f2";
-    priceInput.title = "拼单价低于保本参考价 ¥" + fmt(refPrice) + "，会亏损！";
+    priceInput.title = "拼单价低于保本参考价 ¥" + fmt(refPriceShow) + "，会亏损！";
   } else {
     priceInput.style.borderColor = "";
     priceInput.style.background = "";
     priceInput.title = "";
-  }
-
-  // 折扣后保本价
-  const discRate = parseFloat($("p_discount").value) || 100;
-  const discRefEl = $("v_disc_ref");
-  const tDisc = $("t_disc");
-  if (refPrice > 0 && discRate > 0 && discRate < 100) {
-    const discRefPrice = refPrice / (discRate / 100);
-    discRefEl.textContent = "¥" + fmt(discRefPrice);
-    tDisc.textContent = "打" + Math.round(discRate) + "折时的保本价";
-  } else {
-    discRefEl.textContent = "—";
-    tDisc.textContent = discRate >= 100 ? "输入折扣率后显示" : "折扣率需大于0";
   }
 
   // 核心计算
@@ -468,7 +465,7 @@ $("p_price").addEventListener("input", () => { autoRefCoupon(); recalc(); });
 $("p_unit").addEventListener("input", onCostChange);
 $("p_qty").addEventListener("input", onCostChange);
 $("p_freight").addEventListener("input", onCostChange);
-$("p_discount").addEventListener("input", recalc);
+$("p_discount").addEventListener("input", onCostChange);
 $("p_target_profit").addEventListener("input", recalc);
 $("g_cat").addEventListener("input", onCostChange);
 $("g_tech").addEventListener("input", onCostChange);
