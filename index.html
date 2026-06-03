@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -101,8 +102,29 @@
   }
   .hint { font-size: 8.5px; color: var(--text3); margin-top: 1px; }
 
-  /* 产品库样式 */
-  .prod-lib-toggle {
+  /* 产品库悬浮窗 */
+  .prod-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 9998;
+  }
+  .prod-overlay.show { display: block; }
+  .prod-float-panel {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    width: 320px;
+    max-height: 400px;
+    overflow-y: auto;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+    padding: 10px;
+  }
+  .prod-float-panel.show { display: block; }
+  .prod-toggle-btn {
     font-size: 9.5px;
     font-weight: 600;
     color: var(--accent);
@@ -113,26 +135,30 @@
     cursor: pointer;
     transition: background 0.1s;
     white-space: nowrap;
+    font-family: inherit;
   }
-  .prod-lib-toggle:hover { background: #eef2ff; }
-  .prod-lib-panel {
-    display: none;
-    margin-top: 7px;
-    border: 1px solid var(--border);
-    border-radius: 5px;
-    padding: 7px;
-    background: #f8fafc;
-  }
-  .prod-lib-panel.show { display: block; }
-  .prod-lib-header {
+  .prod-toggle-btn:hover { background: #eef2ff; }
+  .prod-float-header {
     font-size: 9.5px;
     font-weight: 700;
     color: var(--text2);
-    margin-bottom: 5px;
+    margin-bottom: 6px;
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
+  .prod-float-header .close-btn {
+    font-size: 13px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text3);
+    padding: 0 4px;
+    border-radius: 3px;
+    line-height: 1;
+    font-family: inherit;
+  }
+  .prod-float-header .close-btn:hover { background: #f0f2f5; }
   .prod-add-row {
     display: flex;
     gap: 4px;
@@ -310,7 +336,7 @@
         <span style="display:flex;align-items:center;gap:6px;">
           <span>商品信息</span>
         </span>
-        <button class="prod-lib-toggle" id="prod_lib_toggle" onclick="toggleProdLib()">产品库 ▼</button>
+        <button class="prod-toggle-btn" id="prod_toggle_btn" onclick="toggleProdLib()">产品库 ▼</button>
       </div>
 
       <div class="input-row">
@@ -330,22 +356,6 @@
           <label>折扣率(%)</label>
           <input type="number" id="p_discount" value="100" step="1" min="1" max="100">
           <span class="hint">100=不打折，70=打7折</span>
-        </div>
-      </div>
-
-      <!-- 产品库面板 -->
-      <div class="prod-lib-panel" id="prod_lib_panel">
-        <div class="prod-lib-header">
-          <span>产品库（点击单选填入单价）</span>
-          <button class="prod-lib-toggle" onclick="toggleProdLib()" style="font-size:8.5px;padding:1px 5px;">收起 ▲</button>
-        </div>
-        <div class="prod-add-row">
-          <input type="text" id="prod_name_input" placeholder="产品名称">
-          <input type="number" id="prod_price_input" placeholder="单价" step="0.01" min="0">
-          <button class="prod-add-btn" onclick="addProduct()">添加</button>
-        </div>
-        <div class="prod-list" id="prod_list">
-          <div class="prod-empty" id="prod_empty">暂无产品，请在上方添加</div>
         </div>
       </div>
 
@@ -470,6 +480,23 @@
   </div>
 </div>
 
+<!-- 产品库悬浮窗 -->
+<div class="prod-overlay" id="prod_overlay" onclick="closeProdLib()"></div>
+<div class="prod-float-panel" id="prod_float_panel">
+  <div class="prod-float-header">
+    <span>产品库（点击单选填入单价）</span>
+    <button class="close-btn" onclick="closeProdLib()" title="关闭">✕</button>
+  </div>
+  <div class="prod-add-row">
+    <input type="text" id="prod_name_input" placeholder="产品名称">
+    <input type="number" id="prod_price_input" placeholder="单价" step="0.01" min="0">
+    <button class="prod-add-btn" onclick="addProduct()">添加</button>
+  </div>
+  <div class="prod-list" id="prod_list">
+    <div class="prod-empty" id="prod_empty">暂无产品，请在上方添加</div>
+  </div>
+</div>
+
 <script>
 const $ = id => document.getElementById(id);
 const fmt = n => isNaN(n) ? "—" : n.toLocaleString("zh-CN", {maximumFractionDigits:2});
@@ -478,7 +505,7 @@ const fmtPct = n => isNaN(n) ? "—" : (n*100).toFixed(1) + "%";
 let couponManuallyEdited = false;
 let selectedProdId = null;
 
-// ========== 产品库 ==========
+// ========== 产品库悬浮窗 ==========
 const PROD_KEY = "roi_product_db";
 
 function getProducts() {
@@ -489,11 +516,44 @@ function saveProducts(list) {
   localStorage.setItem(PROD_KEY, JSON.stringify(list));
 }
 
+function positionProdPanel() {
+  const btn = $("prod_toggle_btn");
+  const panel = $("prod_float_panel");
+  const rect = btn.getBoundingClientRect();
+  let top = rect.bottom + 6;
+  let left = rect.left;
+  // 防止超出右边界
+  if (left + 320 > window.innerWidth) {
+    left = window.innerWidth - 320 - 8;
+  }
+  // 防止超出下边界
+  if (top + 200 > window.innerHeight) {
+    top = rect.top - 200 - 6;
+    if (top < 0) top = 8;
+  }
+  panel.style.top = top + "px";
+  panel.style.left = left + "px";
+}
+
 function toggleProdLib() {
-  const panel = $("prod_lib_panel");
-  const btn = $("prod_lib_toggle");
-  panel.classList.toggle("show");
-  btn.textContent = panel.classList.contains("show") ? "产品库 ▲" : "产品库 ▼";
+  const panel  = $("prod_float_panel");
+  const overlay = $("prod_overlay");
+  const btn    = $("prod_toggle_btn");
+  const isOpen = panel.classList.contains("show");
+  if (isOpen) {
+    closeProdLib();
+  } else {
+    positionProdPanel();
+    panel.classList.add("show");
+    overlay.classList.add("show");
+    btn.textContent = "产品库 ▲";
+  }
+}
+
+function closeProdLib() {
+  $("prod_float_panel").classList.remove("show");
+  $("prod_overlay").classList.remove("show");
+  $("prod_toggle_btn").textContent = "产品库 ▼";
 }
 
 function renderProducts() {
@@ -546,6 +606,7 @@ function selectProduct(id) {
   $("p_unit").value = p.price;
   couponManuallyEdited = false;
   onCostChange();
+  closeProdLib();
 }
 
 function deleteProduct(id) {
@@ -575,7 +636,7 @@ function autoRefCoupon() {
   }
 }
 
-// 成本(单价/数量/邮费/费率/折扣率)变动 → 拼单价始终自动刷新为参考价
+// 成本(单价/数量/邮费/费率/折扣率)变动 → 拼单价自动刷新为参考价
 function onCostChange() {
   recalc();
   var unit    = parseFloat($("p_unit").value)     || 0;
@@ -708,6 +769,13 @@ $("g_tech").addEventListener("input", onCostChange);
 $("g_ret").addEventListener("input", onCostChange);
 $("prod_name_input").addEventListener("keydown", function(e) { if (e.key === "Enter") { $("prod_price_input").focus(); } });
 $("prod_price_input").addEventListener("keydown", function(e) { if (e.key === "Enter") { addProduct(); } });
+
+// 窗口 resize 时重新定位
+window.addEventListener("resize", function() {
+  if ($("prod_float_panel").classList.contains("show")) {
+    positionProdPanel();
+  }
+});
 
 // 首次加载
 (function(){
