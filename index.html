@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -398,6 +397,22 @@
     </div>
 
     <div class="card" style="margin-top:8px">
+      <div class="card-title">投产比目标</div>
+      <div class="input-row">
+        <div class="field">
+          <label>目标投产比</label>
+          <input type="number" id="p_target_roas" value="0" step="0.1" min="0">
+          <span class="hint">想达到的投产比数值</span>
+        </div>
+        <div class="field">
+          <label>所需拼单价</label>
+          <input type="text" id="p_req_price" readonly>
+          <span class="hint">达到目标投产比需要的拼单价</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:8px">
       <div class="card-title">平台费率</div>
       <div class="input-row">
         <div class="field">
@@ -426,6 +441,7 @@
         <p><b>总成本</b> = 产品单价 × 数量</p>
         <p><b>参考拼单价(保本)</b> = (总成本 + 邮费) ÷ (1 − 类目扣点 − 技术服务费 − 退货率) + 优惠券，折扣率&lt;100时 ÷ (折扣率÷100)</p>
         <p><b>建议拼单价</b> = (总成本 + 邮费 + 目标利润) ÷ (1 − 类目扣点 − 技术服务费 − 退货率) + 优惠券</p>
+        <p><b>所需拼单价</b> = 目标投产比 × (邮费 + 总成本) ÷ (目标投产比 × 分母 − 1) + 优惠券</p>
         <p><b>参考优惠券</b> = CEIL(拼单价 × 2 ÷ 5) （仅供参考，不参与计算）</p>
         <p><b>最终售价</b> = 拼单价 − 优惠券</p>
         <p><b>平台扣费</b> = 最终售价 × (类目扣点 + 技术服务费 + 退货率)</p>
@@ -522,11 +538,9 @@ function positionProdPanel() {
   const rect = btn.getBoundingClientRect();
   let top = rect.bottom + 6;
   let left = rect.left;
-  // 防止超出右边界
   if (left + 320 > window.innerWidth) {
     left = window.innerWidth - 320 - 8;
   }
-  // 防止超出下边界
   if (top + 200 > window.innerHeight) {
     top = rect.top - 200 - 6;
     if (top < 0) top = 8;
@@ -670,7 +684,7 @@ function recalc() {
   var tech    = parseFloat($("g_tech").value)        || 0;
   var ret     = parseFloat($("g_ret").value)         || 0;
 
-  $("p_cost_display").value = "¥" + fmt(cost);
+  $("p_cost_display").value = "" + fmt(cost);
 
   // 优惠券超额警告
   var couponInput = $("p_coupon");
@@ -692,7 +706,7 @@ function recalc() {
   var refPriceShow = (refPriceRaw > 0 && discRate < 100)
     ? refPriceRaw / (discRate / 100)
     : refPriceRaw;
-  $("p_ref_price").value = refPriceShow > 0 ? "¥" + fmt(refPriceShow) : "—";
+  $("p_ref_price").value = refPriceShow > 0 ? "" + fmt(refPriceShow) : "—";
 
   // 建议拼单价（含优惠券；targetProfit = 总利润）
   // 推导：targetProfit = (price - coupon) * denom - freight - cost
@@ -700,7 +714,17 @@ function recalc() {
   var targetProfit = parseFloat($("p_target_profit").value) || 0;
   var couponForSuggest = parseFloat($("p_coupon").value) || 0;
   var suggestPrice = (denom > 0 && targetProfit >= 0) ? ((cost + freight + targetProfit) / denom + couponForSuggest) : 0;
-  $("p_suggest_price").value = suggestPrice > 0 ? "¥" + fmt(suggestPrice) : (targetProfit > 0 ? "参数错误" : "—");
+  $("p_suggest_price").value = suggestPrice > 0 ? "" + fmt(suggestPrice) : (targetProfit > 0 ? "参数错误" : "—");
+
+  // 所需拼单价（按目标投产比反推）
+  // 推导：ROAS = final / profit = price / ((price - coupon) * denom - freight - cost)
+  // ⇒ price = ROAS * (freight + cost) / (ROAS * denom - 1) + coupon
+  var targetRoas = parseFloat($("p_target_roas").value) || 0;
+  var couponForReq = parseFloat($("p_coupon").value) || 0;
+  var reqPrice = (denom > 0 && targetRoas > 0 && targetRoas * denom > 1)
+    ? (targetRoas * (freight + cost) / (targetRoas * denom - 1) + couponForReq)
+    : 0;
+  $("p_req_price").value = reqPrice > 0 ? "" + fmt(reqPrice) : (targetRoas > 0 ? "参数错误" : "—");
 
   // 拼单价低于参考价警告
   var priceInput = $("p_price");
@@ -722,9 +746,9 @@ function recalc() {
   var roas      = profit > 0 ? final / profit : NaN;
   var breakEven = isFinite(roas) ? roas + 1 : NaN;
 
-  $("v_price").textContent  = "¥" + fmt(final);
-  $("v_cost").textContent  = "¥" + fmt(totalCost);
-  $("v_profit").textContent = "¥" + fmt(profit);
+  $("v_price").textContent  = "" + fmt(final);
+  $("v_cost").textContent  = "" + fmt(totalCost);
+  $("v_profit").textContent = "" + fmt(profit);
   $("v_margin").textContent = fmtPct(margin);
   $("v_roas").textContent   = isFinite(roas)      ? fmt(roas)      : "—";
   $("v_break").textContent  = isFinite(breakEven) ? fmt(breakEven) : "—";
@@ -744,6 +768,8 @@ function clearAll() {
   $("p_ref_price").value  = "—";
   $("p_target_profit").value = "0";
   $("p_suggest_price").value = "—";
+  $("p_target_roas").value  = "0";
+  $("p_req_price").value     = "—";
   $("v_coupon_ref").textContent = "—";
   $("p_coupon").value = "0";
   $("p_discount").value = "100";
@@ -764,6 +790,7 @@ $("p_qty").addEventListener("input", onCostChange);
 $("p_freight").addEventListener("input", onCostChange);
 $("p_discount").addEventListener("input", onCostChange);
 $("p_target_profit").addEventListener("input", recalc);
+$("p_target_roas").addEventListener("input", recalc);
 $("g_cat").addEventListener("input", onCostChange);
 $("g_tech").addEventListener("input", onCostChange);
 $("g_ret").addEventListener("input", onCostChange);
