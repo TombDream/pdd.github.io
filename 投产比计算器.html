@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>投产比计算器</title>
+<style>
+  :root {
+    --bg: #fafaf9;
+    --card: #ffffff;
+    --line: #e5e5e5;
+    --line-2: #f5f5f5;
+    --text1: #0a0a0a;
+    --text2: #404040;
+    --text3: #737373;
+    --text4: #a3a3a3;
+    --accent: #4f46e5;
+    --accent-soft: #eef2ff;
+    --green: #059669;
+    --green-soft: #ecfdf5;
+    --yellow: #d97706;
+    --yellow-soft: #fffbeb;
+    --red: #e11d48;
+    --red-soft: #fff1f2;
+    --purple: #7c3aed;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin:0; padding:0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    background-image: radial-gradient(circle, #e7e5e4 1px, transparent 1px);
+    background-size: 24px 24px;
+    color: var(--text1);
+    font-size: 13px;
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* === Nav === */
+  .nav{
+    position:sticky;top:0;z-index:50;
+    background:rgba(250,250,249,.72);
+    backdrop-filter:saturate(180%) blur(16px);
+    -webkit-backdrop-filter:saturate(180%) blur(16px);
+    border-bottom:1px solid var(--line-2);
+  }
+  .nav-inner{
+    max-width:1200px;margin:0 auto;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 24px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:16px;letter-spacing:-.2px;text-decoration:none;color:var(--text1);}
+  .brand-mark{
+    width:28px;height:28px;border-radius:8px;
+    background:conic-gradient(from 180deg at 50% 50%, #4f46e5, #06b6d4, #10b981, #4f46e5);
+    position:relative;
+  }
+  .brand-mark::after{content:'';position:absolute;inset:5px;border-radius:5px;background:var(--bg);}
+  .brand-mark::before{content:'';position:absolute;inset:9px;border-radius:3px;background:linear-gradient(135deg,#4f46e5,#06b6d4);z-index:1;}
+  .nav-right{display:flex;align-items:center;gap:12px;}
+  .back-home {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 600; color: var(--text2);
+    padding: 6px 12px; border-radius: 8px;
+    text-decoration: none;
+    transition: background .2s, color .2s;
+  }
+  .back-home:hover { background: var(--line-2); color: var(--text1); }
+  .nav-pill{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:5px 12px;border-radius:999px;
+    background:var(--green-soft);color:var(--green);
+    font-weight:600;font-size:12px;
+  }
+  .nav-pill .dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(5,150,105,.5);animation:dot 2.4s infinite;}
+  @keyframes dot{0%{box-shadow:0 0 0 0 rgba(5,150,105,.5);}70%{box-shadow:0 0 0 6px rgba(5,150,105,0);}100%{box-shadow:0 0 0 0 rgba(5,150,105,0);}}
+
+  /* === Hero === */
+  .hero{
+    max-width:1200px;margin:0 auto;
+    padding:60px 24px 30px;
+  }
+  .hero .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:6px 14px;border-radius:999px;
+    background:#fff;border:1px solid var(--line);
+    font-size:12px;font-weight:600;color:var(--text2);
+    box-shadow:0 1px 2px rgba(0,0,0,.04);
+    margin-bottom:20px;
+  }
+  .hero .eyebrow .v{color:var(--accent);}
+  .hero h1{
+    font-size:48px;font-weight:800;letter-spacing:-1.8px;line-height:1.05;
+    color:var(--text1);
+    max-width:820px;
+  }
+  .hero h1 .hl{
+    position:relative;display:inline-block;
+    color:var(--accent);
+  }
+  .hero h1 .hl::after{
+    content:'';position:absolute;
+    left:-2px;right:-2px;bottom:4px;height:12px;
+    background:linear-gradient(90deg, rgba(79,70,229,.22) 0%, rgba(124,58,237,.18) 50%, rgba(6,182,212,.22) 100%);
+    z-index:-1;border-radius:4px;
+  }
+  .hero .lede{
+    margin-top:16px;max-width:640px;
+    font-size:16px;color:var(--text2);line-height:1.7;
+  }
+  .main { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 1200px; margin:0 auto; padding: 20px 24px 60px; }
+  @media (max-width: 640px) {
+    .main { grid-template-columns: 1fr; padding: 16px 16px 40px; }
+    .hero { padding: 40px 20px 24px; }
+    .hero h1 { font-size: 28px; letter-spacing: -1px; }
+    .hero .lede { font-size: 14px; }
+    .nav-inner { padding: 12px 16px; }
+  }
+  .card {
+    background: var(--card);
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    padding: 16px 18px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .card-title {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 5px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #f0f2f5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 5px;
+    margin-top: 5px;
+  }
+  .field { display: flex; flex-direction: column; gap: 2px; }
+  .field label {
+    font-size: 9.5px;
+    font-weight: 600;
+    color: var(--text2);
+    letter-spacing: 0.1px;
+  }
+  .field input[type="number"],
+  .field input[type="text"] {
+    padding: 5px 6px;
+    border: 1.5px solid #e2e6ee;
+    border-radius: 5px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--text1);
+    background: #f8fafc;
+    transition: border-color 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
+    width: 100%;
+    font-family: inherit;
+    box-sizing: border-box;
+  }
+  .field input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #fff;
+    box-shadow: 0 0 0 2px rgba(79,110,247,0.12);
+  }
+  .field input[readonly] {
+    background: #f8fafc;
+    color: var(--text2);
+    cursor: default;
+  }
+  .hint { font-size: 8.5px; color: var(--text3); margin-top: 1px; }
+
+  /* 产品库悬浮窗 */
+  .prod-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 9998;
+  }
+  .prod-overlay.show { display: block; }
+  .prod-float-panel {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    width: 320px;
+    max-height: 400px;
+    overflow-y: auto;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+    padding: 10px;
+  }
+  .prod-float-panel.show { display: block; }
+  .prod-toggle-btn {
+    font-size: 9.5px;
+    font-weight: 600;
+    color: var(--accent);
+    background: none;
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 2px 7px;
+    cursor: pointer;
+    transition: background 0.1s;
+    white-space: nowrap;
+    font-family: inherit;
+  }
+  .prod-toggle-btn:hover { background: #eef2ff; }
+  .prod-float-header {
+    font-size: 9.5px;
+    font-weight: 700;
+    color: var(--text2);
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .prod-float-header .close-btn {
+    font-size: 13px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text3);
+    padding: 0 4px;
+    border-radius: 3px;
+    line-height: 1;
+    font-family: inherit;
+  }
+  .prod-float-header .close-btn:hover { background: #f0f2f5; }
+  .prod-add-row {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 6px;
+    align-items: center;
+  }
+  .prod-add-row input[type="text"] {
+    flex: 2;
+    padding: 4px 6px;
+    border: 1.5px solid #e2e6ee;
+    border-radius: 4px;
+    font-size: 11.5px;
+    background: #fff;
+    font-family: inherit;
+  }
+  .prod-add-row input[type="number"] {
+    flex: 1;
+    padding: 4px 6px;
+    border: 1.5px solid #e2e6ee;
+    border-radius: 4px;
+    font-size: 11.5px;
+    background: #fff;
+    font-family: inherit;
+    min-width: 0;
+  }
+  .prod-add-btn {
+    padding: 4px 8px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: inherit;
+  }
+  .prod-add-btn:hover { background: var(--accent); }
+  .prod-list { display: flex; flex-direction: column; gap: 2px; }
+  .prod-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 5px;
+    border-radius: 4px;
+    transition: background 0.1s;
+    cursor: pointer;
+  }
+  .prod-item:hover { background: #eef2ff; }
+  .prod-item input[type="radio"] { cursor: pointer; flex-shrink: 0; }
+  .prod-item .prod-name {
+    flex: 1;
+    font-size: 11.5px;
+    color: var(--text1);
+    font-weight: 500;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .prod-item .prod-price {
+    font-size: 11.5px;
+    color: var(--accent);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .prod-del-btn {
+    background: none;
+    border: none;
+    color: var(--red);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 0 3px;
+    border-radius: 3px;
+    line-height: 1;
+  }
+  .prod-del-btn:hover { background: #fef2f2; }
+  .prod-empty {
+    font-size: 10px;
+    color: var(--text3);
+    text-align: center;
+    padding: 6px 0;
+  }
+
+  .results {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .res-box {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    padding: 8px 10px;
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow 0.15s ease;
+  }
+  .res-box::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 2.5px;
+    background: var(--line);
+  }
+  .res-box.good::before { background: var(--green); }
+  .res-box.warn::before { background: var(--yellow); }
+  .res-box.bad::before  { background: var(--red); }
+  .res-box .lbl { font-size: 9.5px; color: var(--text3); font-weight: 600; letter-spacing: 0.2px; }
+  .res-box .val {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text1);
+    margin: 1px 0 1px;
+    font-variant-numeric: tabular-nums;
+  }
+  .res-box .sub { font-size: 8.5px; color: var(--text3); }
+  .res-box .val[style*="purple"],
+  #v_coupon_ref { color: var(--purple); }
+  .btn-row { display: flex; gap: 6px; margin-top: 8px; }
+  .btn {
+    flex: 1;
+    padding: 6px 0;
+    border: 1.5px solid var(--line);
+    border-radius: 5px;
+    background: var(--card);
+    color: var(--text2);
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.1s ease, border-color 0.1s ease;
+    font-family: inherit;
+  }
+  .btn:hover { background: #f0f2f5; border-color: var(--accent); color: var(--accent); }
+  .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn.primary:hover { background: var(--accent); }
+  .formula-toggle { margin-top: 8px; }
+  .formula-toggle summary {
+    cursor: pointer;
+    font-size: 10px;
+    color: var(--text3);
+    font-weight: 600;
+    letter-spacing: 0.2px;
+  }
+  .formula-box {
+    margin-top: 5px;
+    background: #f8fafc;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 8px;
+    font-size: 10px;
+    line-height: 1.65;
+    color: var(--text2);
+  }
+  .formula-box code {
+    background: #eef2ff;
+    padding: 0.5px 3px;
+    border-radius: 2.5px;
+    font-size: 9.5px;
+    color: var(--accent);
+    font-family: "SF Mono", "Fira Code", monospace;
+  }
+</style>
+</head>
+<body>
+
+<!-- 顶部 Nav -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="主页.html">
+      <div class="brand-mark"></div>
+      <span>电商工具箱</span>
+    </a>
+    <div class="nav-right">
+      <a class="back-home" href="主页.html">← 返回主页</a>
+      <span class="nav-pill"><span class="dot"></span><span>本地计算</span></span>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <span class="eyebrow">🛒 <span class="v">ECOM TOOL</span> · 投产比</span>
+  <h1>投产比 <span class="hl">计算器</span></h1>
+  <p class="lede">输入销售额与广告消耗，3 秒判断这笔投放是赚是亏；同时支持产品库、目标利润反推、保本线测算。</p>
+</section>
+
+<div class="main">
+  <!-- 左列：输入区 -->
+  <div>
+    <div class="card">
+      <div class="card-title">
+        <span style="display:flex;align-items:center;gap:6px;">
+          <span>商品信息</span>
+        </span>
+        <button class="prod-toggle-btn" id="prod_toggle_btn" onclick="toggleProdLib()">产品库 ▼</button>
+      </div>
+
+      <div class="input-row">
+        <div class="field">
+          <label>产品单价</label>
+          <input type="number" id="p_unit" value="0" step="0.01">
+        </div>
+        <div class="field">
+          <label>数量</label>
+          <input type="number" id="p_qty" value="1" step="1" min="1">
+        </div>
+        <div class="field">
+          <label>邮费</label>
+          <input type="number" id="p_freight" value="4" step="0.01">
+        </div>
+        <div class="field">
+          <label>折扣率(%)</label>
+          <input type="number" id="p_discount" value="100" step="1" min="1" max="100">
+          <span class="hint">100=不打折，70=打7折</span>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="field">
+          <label>总成本 = 单价×数量</label>
+          <input type="text" id="p_cost_display" readonly>
+        </div>
+        <div class="field">
+          <label>拼单价</label>
+          <input type="number" id="p_price" value="0" step="0.01">
+        </div>
+        <div class="field">
+          <label>参考拼单价(保本)</label>
+          <input type="text" id="p_ref_price" readonly>
+          <span class="hint">低于此价标红</span>
+        </div>
+
+        <div class="field">
+          <label>优惠券(元)</label>
+          <input type="number" id="p_coupon" value="0" step="1">
+          <span class="hint">实际参与计算 · 超1/2标红</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:8px">
+      <div class="card-title">平台费率</div>
+      <div class="input-row">
+        <div class="field">
+          <label>类目扣点</label>
+          <input type="number" id="g_cat" value="0.0036" step="0.0001">
+        </div>
+        <div class="field">
+          <label>技术服务费</label>
+          <input type="number" id="g_tech" value="0.006" step="0.0001">
+        </div>
+        <div class="field">
+          <label>退货率</label>
+          <input type="number" id="g_ret" value="0.15" step="0.001">
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn" onclick="clearAll()">清空重填</button>
+      <button class="btn primary" onclick="recalc()">重新计算</button>
+    </div>
+
+    <details class="formula-toggle">
+      <summary>展开公式说明</summary>
+      <div class="formula-box">
+        <p><b>总成本</b> = 产品单价 × 数量</p>
+        <p><b>参考拼单价(保本)</b> = (总成本 + 邮费) ÷ (1 − 类目扣点 − 技术服务费 − 退货率) + 优惠券，折扣率&lt;100时 ÷ (折扣率÷100)</p>
+        <p><b>建议拼单价</b> = (总成本 + 邮费 + 目标利润) ÷ [(1 − 类目扣点 − 技术服务费 − 退货率) × 数量] + 优惠券</p>
+        <p><b>所需拼单价</b> = 目标投产比 × (邮费 + 总成本) ÷ [数量 × (目标投产比 × 分母 − 1)] + 优惠券</p>
+        <p><b>参考优惠券</b> = CEIL(拼单价 × 2 ÷ 5) （仅供参考，不参与计算）</p>
+        <p><b>最终售价(单件)</b> = 拼单价 − 优惠券</p>
+        <p><b>总收入</b> = (拼单价 − 优惠券) × 数量</p>
+        <p><b>平台扣费</b> = 总收入 × (类目扣点 + 技术服务费 + 退货率)</p>
+        <p><b>总成本(含运费)</b> = 平台扣费 + 邮费 + 产品总成本</p>
+        <p><b>利润(总)</b> = 总收入 − 总成本(含运费)</p>
+        <p><b>利润率</b> = 利润 ÷ 总收入</p>
+        <p><b>投产比(ROAS)</b> = 总收入 ÷ 利润 （亏损/保本时为 —）</p>
+        <p><b>保本投产比</b> = 投产比 + 1</p>
+      </div>
+    </details>
+  </div>
+
+  <!-- 右列：结果区 + 目标设置 -->
+  <div>
+    <!-- 利润目标 -->
+    <div class="card">
+      <div class="card-title">利润目标</div>
+      <div class="input-row">
+        <div class="field">
+          <label>目标利润(元)</label>
+          <input type="number" id="p_target_profit" value="0" step="0.01">
+        </div>
+        <div class="field">
+          <label>建议拼单价</label>
+          <input type="text" id="p_suggest_price" readonly>
+          <span class="hint">按总目标利润算出</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 投产比目标 -->
+    <div class="card" style="margin-top:8px">
+      <div class="card-title">投产比目标</div>
+      <div class="input-row">
+        <div class="field">
+          <label>目标投产比</label>
+          <input type="number" id="p_target_roas" value="0" step="0.1" min="0">
+          <span class="hint">想达到的投产比数值</span>
+        </div>
+        <div class="field">
+          <label>所需拼单价</label>
+          <input type="text" id="p_req_price" readonly>
+          <span class="hint">达到目标投产比需要的拼单价</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="results" style="margin-top:8px">
+      <div class="res-box" id="r_coupon_ref">
+        <div class="lbl">参考优惠券(元)</div>
+        <div class="val" id="v_coupon_ref">—</div>
+        <div class="sub">CEIL(拼单价 × 2 ÷ 5)，仅供参考</div>
+      </div>
+      <div class="res-box" id="r_price">
+        <div class="lbl">最终售价(元)</div>
+        <div class="val" id="v_price">—</div>
+        <div class="sub">单件：拼单价 − 优惠券</div>
+      </div>
+      <div class="res-box" id="r_cost">
+        <div class="lbl">总成本(元)</div>
+        <div class="val" id="v_cost">—</div>
+        <div class="sub">平台总扣费 + 邮费 + 产品总成本</div>
+      </div>
+      <div class="res-box" id="r_profit">
+        <div class="lbl">利润(元)</div>
+        <div class="val" id="v_profit">—</div>
+        <div class="sub" id="t_roas">—</div>
+      </div>
+      <div class="res-box" id="r_margin">
+        <div class="lbl">利润率</div>
+        <div class="val" id="v_margin">—</div>
+        <div class="sub">利润 ÷ 最终售价</div>
+      </div>
+      <div class="res-box" id="r_roas">
+        <div class="lbl">投产比(ROAS)</div>
+        <div class="val" id="v_roas">—</div>
+        <div class="sub">最终售价 ÷ 利润，越高越好</div>
+      </div>
+      <div class="res-box" id="r_break">
+        <div class="lbl">保本投产比</div>
+        <div class="val" id="v_break">—</div>
+        <div class="sub">投产比 + 1</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 产品库悬浮窗 -->
+<div class="prod-overlay" id="prod_overlay" onclick="closeProdLib()"></div>
+<div class="prod-float-panel" id="prod_float_panel">
+  <div class="prod-float-header">
+    <span>产品库（点击单选填入单价）</span>
+    <button class="close-btn" onclick="closeProdLib()" title="关闭">✕</button>
+  </div>
+  <div class="prod-add-row">
+    <input type="text" id="prod_name_input" placeholder="产品名称">
+    <input type="number" id="prod_price_input" placeholder="单价" step="0.01" min="0">
+    <button class="prod-add-btn" onclick="addProduct()">添加</button>
+  </div>
+  <div class="prod-list" id="prod_list">
+    <div class="prod-empty" id="prod_empty">暂无产品，请在上方添加</div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const fmt = n => isNaN(n) ? "—" : n.toLocaleString("zh-CN", {maximumFractionDigits:2});
+const fmtPct = n => isNaN(n) ? "—" : (n*100).toFixed(1) + "%";
+
+let couponManuallyEdited = false;
+let selectedProdId = null;
+
+// ========== 产品库悬浮窗 ==========
+const PROD_KEY = "roi_product_db";
+
+function getProducts() {
+  try { return JSON.parse(localStorage.getItem(PROD_KEY)) || []; }
+  catch(e) { return []; }
+}
+function saveProducts(list) {
+  localStorage.setItem(PROD_KEY, JSON.stringify(list));
+}
+
+function positionProdPanel() {
+  const btn = $("prod_toggle_btn");
+  const panel = $("prod_float_panel");
+  const rect = btn.getBoundingClientRect();
+  let top = rect.bottom + 6;
+  let left = rect.left;
+  if (left + 320 > window.innerWidth) {
+    left = window.innerWidth - 320 - 8;
+  }
+  if (top + 200 > window.innerHeight) {
+    top = rect.top - 200 - 6;
+    if (top < 0) top = 8;
+  }
+  panel.style.top = top + "px";
+  panel.style.left = left + "px";
+}
+
+function toggleProdLib() {
+  const panel  = $("prod_float_panel");
+  const overlay = $("prod_overlay");
+  const btn    = $("prod_toggle_btn");
+  const isOpen = panel.classList.contains("show");
+  if (isOpen) {
+    closeProdLib();
+  } else {
+    positionProdPanel();
+    panel.classList.add("show");
+    overlay.classList.add("show");
+    btn.textContent = "产品库 ▲";
+  }
+}
+
+function closeProdLib() {
+  $("prod_float_panel").classList.remove("show");
+  $("prod_overlay").classList.remove("show");
+  $("prod_toggle_btn").textContent = "产品库 ▼";
+}
+
+function renderProducts() {
+  const list = getProducts();
+  const container = $("prod_list");
+  const emptyTip = $("prod_empty");
+  container.querySelectorAll(".prod-item").forEach(el => el.remove());
+
+  if (list.length === 0) {
+    emptyTip.style.display = "";
+    return;
+  }
+  emptyTip.style.display = "none";
+
+  list.forEach(function(p) {
+    var row = document.createElement("div");
+    row.className = "prod-item";
+    row.innerHTML =
+      '<input type="radio" name="prod_sel" id="prod_' + p.id + '" ' +
+      (selectedProdId === p.id ? 'checked' : '') +
+      ' onchange="selectProduct(\'' + p.id + '\')">' +
+      '<label for="prod_' + p.id + '" style="display:flex;flex:1;align-items:center;gap:5px;cursor:pointer;">' +
+        '<span class="prod-name">' + escapeHtml(p.name) + '</span>' +
+        '<span class="prod-price">' + fmt(p.price) + '</span>' +
+      '</label>' +
+      '<button class="prod-del-btn" onclick="event.stopPropagation();deleteProduct(\'' + p.id + '\')" title="删除">×</button>';
+    container.appendChild(row);
+  });
+}
+
+function addProduct() {
+  var nameInput = $("prod_name_input");
+  var priceInput = $("prod_price_input");
+  var name = nameInput.value.trim();
+  var price = parseFloat(priceInput.value);
+  if (!name || isNaN(price) || price < 0) { alert("请填写产品名称和有效单价"); return; }
+  var list = getProducts();
+  list.push({ id: Date.now().toString(36), name: name, price: price });
+  saveProducts(list);
+  nameInput.value = "";
+  priceInput.value = "";
+  renderProducts();
+}
+
+function selectProduct(id) {
+  var list = getProducts();
+  var p = list.find(function(x) { return x.id === id; });
+  if (!p) return;
+  selectedProdId = id;
+  $("p_unit").value = p.price;
+  couponManuallyEdited = false;
+  onCostChange();
+  closeProdLib();
+}
+
+function deleteProduct(id) {
+  if (!confirm("确定删除该产品？")) return;
+  var list = getProducts();
+  list = list.filter(function(x) { return x.id !== id; });
+  saveProducts(list);
+  if (selectedProdId === id) selectedProdId = null;
+  renderProducts();
+}
+
+function escapeHtml(s) {
+  var d = document.createElement("div");
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ========== 计算器核心 ==========
+// 拼单价变动时，自动刷新参考优惠券 = 向上取整(拼单价 × 2/5)
+function autoRefCoupon() {
+  if (couponManuallyEdited) return;
+  var price = parseFloat($("p_price").value) || 0;
+  if (price > 0) {
+    $("v_coupon_ref").textContent = Math.ceil(price * 2 / 5);
+  } else {
+    $("v_coupon_ref").textContent = "—";
+  }
+}
+
+// 成本(单价/数量/邮费/费率/折扣率)变动 → 拼单价自动刷新为参考价
+function onCostChange() {
+  recalc();
+  var unit    = parseFloat($("p_unit").value)     || 0;
+  var qty     = parseInt($("p_qty").value)         || 1;
+  var cost    = unit * qty;
+  var freight = parseFloat($("p_freight").value) || 0;
+  var cat     = parseFloat($("g_cat").value)         || 0;
+  var tech    = parseFloat($("g_tech").value)        || 0;
+  var ret     = parseFloat($("g_ret").value)         || 0;
+  var denom   = 1 - cat - tech - ret;
+  var refPriceRaw = (denom > 0) ? ((cost + freight) / denom) : 0;
+  var discRate = parseFloat($("p_discount").value) || 100;
+  var refPriceShow = (refPriceRaw > 0 && discRate < 100)
+    ? refPriceRaw / (discRate / 100)
+    : refPriceRaw;
+  if (refPriceShow > 0) {
+    $("p_price").value = refPriceShow.toFixed(2);
+    autoRefCoupon();
+    recalc();
+  }
+}
+
+function recalc() {
+  var unit    = parseFloat($("p_unit").value)     || 0;
+  var qty     = parseInt($("p_qty").value)         || 1;
+  var cost    = unit * qty;
+  var freight = parseFloat($("p_freight").value) || 0;
+  var price   = parseFloat($("p_price").value)      || 0;
+  var coupon  = parseFloat($("p_coupon").value)    || 0;
+  var cat     = parseFloat($("g_cat").value)         || 0;
+  var tech    = parseFloat($("g_tech").value)        || 0;
+  var ret     = parseFloat($("g_ret").value)         || 0;
+
+  $("p_cost_display").value = "" + fmt(cost);
+
+  // 优惠券超额警告
+  var couponInput = $("p_coupon");
+  if (price > 0 && coupon > price * 0.5) {
+    couponInput.style.borderColor = "var(--red)";
+    couponInput.style.background = "#fef2f2";
+    couponInput.title = "优惠券过高！超过拼单价 1/2";
+  } else {
+    couponInput.style.borderColor = "";
+    couponInput.style.background = "";
+    couponInput.title = "";
+  }
+
+  // 参考价(保本价)，随折扣率变化，含优惠券
+  var denom = 1 - cat - tech - ret;
+  var couponForRef = parseFloat($("p_coupon").value) || 0;
+  var refPriceRaw = (denom > 0) ? ((cost + freight) / denom + couponForRef) : 0;
+  var discRate = parseFloat($("p_discount").value) || 100;
+  var refPriceShow = (refPriceRaw > 0 && discRate < 100)
+    ? refPriceRaw / (discRate / 100)
+    : refPriceRaw;
+  $("p_ref_price").value = refPriceShow > 0 ? "" + fmt(refPriceShow) : "—";
+
+  // 建议拼单价（含优惠券；targetProfit = 总利润）
+  // 推导：targetProfit = (price - coupon) * denom - freight - cost
+  // ⇒ price = (targetProfit + freight + cost) / denom + coupon
+  var targetProfit = parseFloat($("p_target_profit").value) || 0;
+  var couponForSuggest = parseFloat($("p_coupon").value) || 0;
+  var suggestPrice = (denom > 0 && targetProfit >= 0 && qty > 0) ? ((cost + freight + targetProfit) / (denom * qty) + couponForSuggest) : 0;
+  $("p_suggest_price").value = suggestPrice > 0 ? "" + fmt(suggestPrice) : (targetProfit > 0 ? "参数错误" : "—");
+
+  // 所需拼单价（按目标投产比反推）
+  // 推导：ROAS = 总收入 / 利润 = [(P-C)×Q] / [(P-C)×Q×denom - F - COST]
+  // ⇒ P = ROAS × (F + COST) / [Q × (ROAS × denom - 1)] + C
+  var targetRoas = parseFloat($("p_target_roas").value) || 0;
+  var couponForReq = parseFloat($("p_coupon").value) || 0;
+  var reqPrice = (denom > 0 && targetRoas > 0 && targetRoas * denom > 1)
+    ? (targetRoas * (freight + cost) / (qty * (targetRoas * denom - 1)) + couponForReq)
+    : 0;
+  $("p_req_price").value = reqPrice > 0 ? "" + fmt(reqPrice) : (targetRoas > 0 ? "参数错误" : "—");
+
+  // 拼单价低于参考价警告
+  var priceInput = $("p_price");
+  if (refPriceShow > 0 && price > 0 && price < refPriceShow) {
+    priceInput.style.borderColor = "var(--red)";
+    priceInput.style.background = "#fef2f2";
+    priceInput.title = "拼单价低于保本参考价 " + fmt(refPriceShow) + "，会亏损！";
+  } else {
+    priceInput.style.borderColor = "";
+    priceInput.style.background = "";
+    priceInput.title = "";
+  }
+
+  // 核心计算（优惠券每单只减一次）
+  var totalRevenue = price * qty - coupon;            // 总收入 = 拼单价×数量 − 优惠券(整单一次)
+  var platformFee  = totalRevenue * (cat + tech + ret); // 平台总扣费
+  var totalCost    = platformFee + freight + cost;      // 总成本
+  var profit       = totalRevenue - totalCost;           // 总利润
+  var margin      = totalRevenue > 0 ? profit / totalRevenue : NaN;
+  var roas        = profit > 0 ? totalRevenue / profit : NaN;
+  var breakEven = isFinite(roas) ? roas + 1 : NaN;
+
+  $("v_price").textContent  = "" + fmt((price - coupon));  // 单件最终售价
+  $("v_cost").textContent  = "" + fmt(totalCost);
+  $("v_profit").textContent = "" + fmt(profit);
+  $("v_margin").textContent = fmtPct(margin);
+  $("v_roas").textContent   = isFinite(roas)      ? fmt(roas)      : "—";
+  $("v_break").textContent  = isFinite(breakEven) ? fmt(breakEven) : "—";
+
+  var setCls = function(el, cls) { el.className = "res-box"; if (cls) el.classList.add(cls); };
+  setCls($("r_profit"), profit>0 ? "good" : (profit<0 ? "bad" : "warn"));
+  setCls($("r_margin"), !isNaN(margin) ? (margin>0.2 ? "good" : (margin>0 ? "warn" : "bad")) : "warn");
+  setCls($("r_roas"),   !isNaN(roas)   ? (roas<5  ? "good" : (roas<10 ? "warn" : "bad")) : "bad");
+  $("t_roas").textContent = isNaN(roas) ? "—" : (profit<0 ? "亏损" : (profit===0 ? "保本" : (roas<3 ? "优秀" : (roas<6 ? "一般" : "偏高"))));
+}
+
+function clearAll() {
+  $("p_unit").value  = "0";
+  $("p_qty").value  = "1";
+  $("p_freight").value = "4";
+  $("p_price").value = "0";
+  $("p_ref_price").value  = "—";
+  $("p_target_profit").value = "0";
+  $("p_suggest_price").value = "—";
+  $("p_target_roas").value  = "0";
+  $("p_req_price").value     = "—";
+  $("v_coupon_ref").textContent = "—";
+  $("p_coupon").value = "0";
+  $("p_discount").value = "100";
+  $("g_cat").value  = "0.0036";
+  $("g_tech").value = "0.006";
+  $("g_ret").value  = "0.15";
+  couponManuallyEdited = false;
+  selectedProdId = null;
+  renderProducts();
+  recalc();
+}
+
+// 事件绑定
+$("p_coupon").addEventListener("input", function() { couponManuallyEdited = true; recalc(); });
+$("p_price").addEventListener("input", function() { autoRefCoupon(); recalc(); });
+$("p_unit").addEventListener("input", onCostChange);
+$("p_qty").addEventListener("input", onCostChange);
+$("p_freight").addEventListener("input", onCostChange);
+$("p_discount").addEventListener("input", onCostChange);
+$("p_target_profit").addEventListener("input", recalc);
+$("p_target_roas").addEventListener("input", recalc);
+$("g_cat").addEventListener("input", onCostChange);
+$("g_tech").addEventListener("input", onCostChange);
+$("g_ret").addEventListener("input", onCostChange);
+$("prod_name_input").addEventListener("keydown", function(e) { if (e.key === "Enter") { $("prod_price_input").focus(); } });
+$("prod_price_input").addEventListener("keydown", function(e) { if (e.key === "Enter") { addProduct(); } });
+
+// 窗口 resize 时重新定位
+window.addEventListener("resize", function() {
+  if ($("prod_float_panel").classList.contains("show")) {
+    positionProdPanel();
+  }
+});
+
+// 首次加载
+(function(){
+  renderProducts();
+  recalc();
+  var refVal = parseFloat($("p_ref_price").value.replace(/[,]/g,"")) || 0;
+  if (refVal > 0) {
+    $("p_price").value = refVal.toFixed(2);
+  }
+  autoRefCoupon();
+  recalc();
+})();
+</script>
+
+</body>
+</html>
