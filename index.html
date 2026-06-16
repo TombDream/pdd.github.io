@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>电商工具箱 · 主页</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  :root{
+    --bg:#fafaf9;
+    --card:#ffffff;
+    --ink:#0a0a0a;
+    --ink-2:#404040;
+    --ink-3:#737373;
+    --line:#e5e5e5;
+    --line-2:#f5f5f5;
+    --indigo:#4f46e5;
+    --indigo-soft:#eef2ff;
+    --emerald:#059669;
+    --emerald-soft:#ecfdf5;
+    --amber:#d97706;
+    --amber-soft:#fffbeb;
+  }
+  html,body{background:var(--bg);color:var(--ink);}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    /* 细密点阵底纹 */
+    background-image:radial-gradient(circle, #e7e5e4 1px, transparent 1px);
+    background-size:24px 24px;
+    background-position:0 0;
+  }
+
+  /* ============ 顶部 Nav ============ */
+  .nav{
+    position:sticky;top:0;z-index:50;
+    background:rgba(250,250,249,.72);
+    backdrop-filter:saturate(180%) blur(16px);
+    -webkit-backdrop-filter:saturate(180%) blur(16px);
+    border-bottom:1px solid var(--line-2);
+  }
+  .nav-inner{
+    max-width:1200px;margin:0 auto;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 24px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:16px;letter-spacing:-.2px;}
+  .brand-mark{
+    width:28px;height:28px;border-radius:8px;
+    background:conic-gradient(from 180deg at 50% 50%, #4f46e5, #06b6d4, #10b981, #4f46e5);
+    position:relative;
+  }
+  .brand-mark::after{
+    content:'';position:absolute;inset:5px;border-radius:5px;background:var(--bg);
+  }
+  .brand-mark::before{
+    content:'';position:absolute;inset:9px;border-radius:3px;
+    background:linear-gradient(135deg,#4f46e5,#06b6d4);
+    z-index:1;
+  }
+  .nav-meta{display:flex;align-items:center;gap:16px;font-size:13px;color:var(--ink-3);}
+  .nav-pill{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:5px 12px;border-radius:999px;
+    background:var(--emerald-soft);color:var(--emerald);
+    font-weight:600;font-size:12px;
+  }
+  .nav-pill .dot{width:6px;height:6px;border-radius:50%;background:var(--emerald);box-shadow:0 0 0 0 rgba(5,150,105,.5);animation:dot 2.4s infinite;}
+  @keyframes dot{0%{box-shadow:0 0 0 0 rgba(5,150,105,.5);}70%{box-shadow:0 0 0 6px rgba(5,150,105,0);}100%{box-shadow:0 0 0 0 rgba(5,150,105,0);}}
+
+  /* ============ Hero ============ */
+  .hero{
+    max-width:1200px;margin:0 auto;
+    padding:80px 24px 60px;
+    position:relative;
+  }
+  .hero .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:6px 14px;border-radius:999px;
+    background:#fff;border:1px solid var(--line);
+    font-size:12px;font-weight:600;color:var(--ink-2);
+    box-shadow:0 1px 2px rgba(0,0,0,.04);
+    margin-bottom:24px;
+  }
+  .hero .eyebrow .v{color:var(--indigo);}
+  .hero h1{
+    font-size:72px;font-weight:800;letter-spacing:-2.5px;line-height:1.05;
+    color:var(--ink);
+    max-width:900px;
+  }
+  .hero h1 .hl{
+    position:relative;display:inline-block;
+    font-style:italic;
+    font-family:"SF Pro Display","PingFang SC",serif;
+    color:#4f46e5;
+  }
+  .hero h1 .hl::after{
+    content:'';position:absolute;
+    left:-2px;right:-2px;bottom:6px;height:14px;
+    background:linear-gradient(90deg, rgba(79,70,229,.22) 0%, rgba(124,58,237,.18) 50%, rgba(6,182,212,.22) 100%);
+    z-index:-1;border-radius:4px;
+  }
+  .hero .lede{
+    margin-top:24px;max-width:640px;
+    font-size:18px;color:var(--ink-2);line-height:1.7;
+  }
+  .hero .lede strong{color:var(--ink);font-weight:600;}
+
+  /* 装饰用 mini stat 行 */
+  .hero .meta-row{
+    margin-top:36px;display:flex;gap:36px;flex-wrap:wrap;
+  }
+  .hero .meta-item{display:flex;align-items:baseline;gap:8px;}
+  .hero .meta-item b{font-size:22px;font-weight:800;letter-spacing:-.5px;}
+  .hero .meta-item span{font-size:13px;color:var(--ink-3);}
+
+  /* ============ Bento Grid ============ */
+  .bento{
+    max-width:1200px;margin:0 auto;
+    padding:20px 24px 80px;
+    display:grid;
+    grid-template-columns:repeat(6,1fr);
+    gap:16px;
+  }
+
+  /* 通用卡片 */
+  .bcard{
+    position:relative;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:28px;
+    text-decoration:none;color:inherit;
+    transition:transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s, border-color .35s;
+    overflow:hidden;
+    display:flex;flex-direction:column;
+  }
+  .bcard:hover{transform:translateY(-4px);box-shadow:0 24px 50px -20px rgba(15,23,42,.18);border-color:transparent;}
+  .bcard .tag{
+    display:inline-flex;align-items:center;gap:5px;
+    font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+    color:var(--ink-3);
+  }
+  .bcard h3{
+    font-size:22px;font-weight:700;letter-spacing:-.5px;
+    margin-top:14px;line-height:1.25;
+  }
+  .bcard p{
+    font-size:14px;color:var(--ink-2);line-height:1.65;
+    margin-top:8px;
+  }
+  .bcard .arrow{
+    position:absolute;top:24px;right:24px;
+    width:36px;height:36px;border-radius:50%;
+    border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;color:var(--ink-2);
+    transition:all .3s;
+  }
+  .bcard:hover .arrow{background:var(--ink);color:#fff;border-color:var(--ink);transform:rotate(-45deg);}
+
+  /* Bento 尺寸 */
+  .b1{grid-column:span 4;}
+  .b2{grid-column:span 2;}
+  .b3{grid-column:span 2;}
+  .b4{grid-column:span 2;}
+  .b5{grid-column:span 2;}
+
+  /* ---------- 大卡 1:引流款测算 ---------- */
+  .b1{
+    background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color:#fff;border-color:transparent;
+    min-height:340px;
+  }
+  .b1::before{
+    content:'';position:absolute;inset:0;
+    background:
+      radial-gradient(ellipse at top right, rgba(124,58,237,.35) 0%, transparent 60%),
+      radial-gradient(ellipse at bottom left, rgba(6,182,212,.25) 0%, transparent 60%);
+    pointer-events:none;
+  }
+  .b1 .tag{color:rgba(255,255,255,.6);}
+  .b1 h3{color:#fff;font-size:30px;}
+  .b1 p{color:rgba(255,255,255,.7);max-width:90%;}
+  .b1 .arrow{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff;}
+  .b1:hover .arrow{background:#fff;color:#0f172a;border-color:#fff;}
+  .b1 .hot-pill{
+    position:absolute;top:24px;right:72px;
+    background:linear-gradient(135deg,#fbbf24,#f59e0b);
+    color:#0f172a;font-size:10px;font-weight:800;letter-spacing:1px;
+    padding:4px 10px;border-radius:6px;
+  }
+
+  /* 卡片内"5个模块"示意 */
+  .b1 .modules{
+    margin-top:24px;display:grid;grid-template-columns:repeat(5,1fr);gap:8px;
+  }
+  .b1 .mod{
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:10px;padding:10px 8px;text-align:center;
+    backdrop-filter:blur(8px);
+  }
+  .b1 .mod .em{font-size:18px;display:block;margin-bottom:4px;}
+  .b1 .mod .lb{font-size:10px;color:rgba(255,255,255,.7);font-weight:600;letter-spacing:.3px;}
+
+  /* 底部示例数字 */
+  .b1 .demo{
+    margin-top:auto;padding-top:20px;
+    display:flex;align-items:flex-end;gap:24px;flex-wrap:wrap;
+    position:relative;z-index:1;
+  }
+  .b1 .demo .d-item{display:flex;flex-direction:column;gap:2px;}
+  .b1 .demo .d-item .n{font-size:26px;font-weight:800;letter-spacing:-.5px;
+    background:linear-gradient(180deg,#fff,#a5f3fc);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .b1 .demo .d-item .l{font-size:11px;color:rgba(255,255,255,.55);}
+
+  /* ---------- 小卡通用:亮色主题 ---------- */
+  .b2{background:linear-gradient(180deg, #ffffff 0%, #f0f9ff 100%);}
+  .b2 .icon{
+    width:44px;height:44px;border-radius:12px;
+    background:linear-gradient(135deg,#0ea5e9,#06b6d4);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;
+    box-shadow:0 8px 16px -6px rgba(14,165,233,.4);
+  }
+
+  .b3{background:linear-gradient(180deg, #ffffff 0%, #fef3c7 100%);}
+  .b3 .icon{
+    width:44px;height:44px;border-radius:12px;
+    background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;
+    box-shadow:0 8px 16px -6px rgba(245,158,11,.4);
+  }
+
+  .b4{background:linear-gradient(180deg, #ffffff 0%, #ede9fe 100%);}
+  .b4 .icon{
+    width:44px;height:44px;border-radius:12px;
+    background:linear-gradient(135deg,#8b5cf6,#a855f7);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;
+    box-shadow:0 8px 16px -6px rgba(139,92,246,.4);
+  }
+
+  .b5{background:linear-gradient(180deg, #ffffff 0%, #fce7f3 100%);}
+  .b5 .icon{
+    width:44px;height:44px;border-radius:12px;
+    background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;
+    box-shadow:0 8px 16px -6px rgba(236,72,153,.4);
+  }
+
+  /* 占位卡 */
+  .bcard.soon{opacity:.55;cursor:not-allowed;}
+  .bcard.soon:hover{transform:none;box-shadow:none;}
+  .bcard.soon::after{
+    content:'即将上线';position:absolute;top:24px;right:24px;
+    font-size:10px;font-weight:700;letter-spacing:1px;
+    color:var(--ink-3);
+    background:#f5f5f4;padding:3px 8px;border-radius:6px;
+  }
+  .bcard.soon .arrow{display:none;}
+
+  /* ============ 特性条 ============ */
+  .features{
+    max-width:1200px;margin:0 auto;padding:0 24px 80px;
+  }
+  .feat-grid{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+    background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;
+  }
+  .feat{
+    padding:24px 22px;border-right:1px solid var(--line-2);
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .feat:last-child{border-right:none;}
+  .feat .em{font-size:22px;}
+  .feat h4{font-size:14px;font-weight:700;letter-spacing:-.2px;}
+  .feat p{font-size:12px;color:var(--ink-3);line-height:1.6;}
+
+  /* ============ 底部 ============ */
+  .footer{
+    max-width:1200px;margin:0 auto;
+    padding:32px 24px 48px;
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;
+    font-size:13px;color:var(--ink-3);
+    border-top:1px solid var(--line-2);
+  }
+  .footer .links{display:flex;gap:20px;}
+  .footer a{color:var(--ink-3);text-decoration:none;transition:color .2s;}
+  .footer a:hover{color:var(--ink);}
+
+  /* ============ 响应式 ============ */
+  @media(max-width:960px){
+    .b1{grid-column:span 6;}
+    .b2,.b3,.b4,.b5{grid-column:span 3;}
+    .feat-grid{grid-template-columns:repeat(2,1fr);}
+    .feat:nth-child(2n){border-right:none;}
+    .feat:nth-child(-n+2){border-bottom:1px solid var(--line-2);}
+  }
+  @media(max-width:640px){
+    .nav-meta .nav-pill span:not(.dot){display:none;}
+    .hero{padding:48px 20px 40px;}
+    .hero h1{font-size:42px;letter-spacing:-1.5px;}
+    .hero .lede{font-size:15px;}
+    .hero .meta-row{gap:20px;}
+    .bento{padding:12px 20px 60px;gap:12px;}
+    .b1,.b2,.b3,.b4,.b5{grid-column:span 6;}
+    .b1{min-height:auto;padding:24px;}
+    .b1 h3{font-size:22px;}
+    .b1 .modules{grid-template-columns:repeat(5,1fr);gap:6px;}
+    .b1 .demo{gap:16px;}
+    .b1 .demo .d-item .n{font-size:20px;}
+    .feat-grid{grid-template-columns:1fr;}
+    .feat{border-right:none;border-bottom:1px solid var(--line-2);}
+    .feat:last-child{border-bottom:none;}
+    .features{padding:0 20px 60px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- 顶部 Nav -->
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <span>电商工具箱</span>
+    </div>
+    <div class="nav-meta">
+      <span class="nav-pill"><span class="dot"></span><span>本地计算</span></span>
+      <span>v1.0</span>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <span class="eyebrow">🛒 <span class="v">ECOM STACK</span> · 为电商卖家打造</span>
+  <h1>把每一次<br>上架和投放 <span class="hl">算清楚</span>。</h1>
+  <p class="lede">
+    一组轻量、好用的<strong>电商测算工具</strong>。从引流款定价、广告投产到平台费率，
+    <strong>实时</strong>算出每一单的利润、每一笔广告的盈亏，再也不用拍脑袋决策。
+  </p>
+  <div class="meta-row">
+    <div class="meta-item"><b>2</b><span>已上线工具</span></div>
+    <div class="meta-item"><b>3</b><span>即将上线</span></div>
+    <div class="meta-item"><b>100%</b><span>本地计算</span></div>
+    <div class="meta-item"><b>0</b><span>数据上传</span></div>
+  </div>
+</section>
+
+<!-- Bento -->
+<section class="bento">
+
+  <!-- 主推：大卡 -->
+  <a class="bcard b1" href="电商引流款测算公式.html">
+    <span class="hot-pill">★ HOT</span>
+    <span class="arrow">→</span>
+    <span class="tag">FEATURED · 主推</span>
+    <h3>电商引流款<br>定价 &amp; 投产测算</h3>
+    <p>5 张卡片联动测算：基础定价、广告投产、拼单价 &amp; 优惠券、平台费率（退货 + 扣点）、当前投产盈亏。</p>
+
+    <div class="modules">
+      <div class="mod"><span class="em">💰</span><span class="lb">定价</span></div>
+      <div class="mod"><span class="em">📊</span><span class="lb">投产</span></div>
+      <div class="mod"><span class="em">🎟️</span><span class="lb">券后</span></div>
+      <div class="mod"><span class="em">🏷️</span><span class="lb">费率</span></div>
+      <div class="mod"><span class="em">📈</span><span class="lb">盈亏</span></div>
+    </div>
+
+    <div class="demo">
+      <div class="d-item"><span class="n">¥39.9</span><span class="l">示例定价</span></div>
+      <div class="d-item"><span class="n">3.2</span><span class="l">保本投产</span></div>
+      <div class="d-item"><span class="n">28%</span><span class="l">净毛利率</span></div>
+      <div class="d-item"><span class="n">≤0.4</span><span class="l">毛利率·触发×2</span></div>
+    </div>
+  </a>
+
+  <!-- 副卡：投产比计算器 -->
+  <a class="bcard b2" href="投产比计算器.html">
+    <span class="arrow">→</span>
+    <div class="icon">📊</div>
+    <span class="tag" style="margin-top:14px;">ROI · 投产比</span>
+    <h3>投产比<br>计算器</h3>
+    <p>填入销售额与广告消耗，3 秒判断这笔投放是赚是亏。</p>
+  </a>
+
+  <!-- 占位 1 -->
+  <div class="bcard b3 soon">
+    <div class="icon">📈</div>
+    <span class="tag" style="margin-top:14px;">PROFIT · 利润</span>
+    <h3>利润报表<br>生成器</h3>
+    <p>导入订单，一键生成日 / 周 / 月利润报表，看清每个 SKU 的真实利润。</p>
+  </div>
+
+  <!-- 占位 2 -->
+  <div class="bcard b4 soon">
+    <div class="icon">🎯</div>
+    <span class="tag" style="margin-top:14px;">KEYWORD · 关键词</span>
+    <h3>关键词<br>竞争分析</h3>
+    <p>分析类目下关键词的搜索量、转化率、竞争度，帮你选出最优引流词。</p>
+  </div>
+
+  <!-- 占位 3 -->
+  <div class="bcard b5 soon">
+    <div class="icon">⚖️</div>
+    <span class="tag" style="margin-top:14px;">MULTI · 多平台</span>
+    <h3>多平台<br>比价工具</h3>
+    <p>同一商品同步到淘宝、拼多多、抖店，自动算出各平台最优渠道。</p>
+  </div>
+
+</section>
+
+<!-- 特性条 -->
+<section class="features">
+  <div class="feat-grid">
+    <div class="feat">
+      <span class="em">⚡</span>
+      <h4>实时测算</h4>
+      <p>输入即出结果，<br>无需点按钮。</p>
+    </div>
+    <div class="feat">
+      <span class="em">🔒</span>
+      <h4>本地计算</h4>
+      <p>所有数据仅在你的浏览器，<br>零上传、零泄露。</p>
+    </div>
+    <div class="feat">
+      <span class="em">📱</span>
+      <h4>手机可用</h4>
+      <p>响应式布局，<br>电脑上手机都能用。</p>
+    </div>
+    <div class="feat">
+      <span class="em">🆓</span>
+      <h4>永久免费</h4>
+      <p>工具永久免费，<br>后续也保持免费。</p>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div>© 2026 电商工具箱 · 由 <strong>WorkBuddy</strong> 倾情打造</div>
+  <div class="links">
+    <a href="电商引流款测算公式.html">定价测算</a>
+    <a href="投产比计算器.html">投产比</a>
+    <a href="#">反馈建议</a>
+  </div>
+</footer>
+
+</body>
+</html>
